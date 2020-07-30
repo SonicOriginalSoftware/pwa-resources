@@ -2,7 +2,6 @@
   "name": "component-framework",
   "version": "0.1.0",
   "description": "Front-end web app framework based on Web Components",
-  "main": "index.js",
   "directories": {
     "lib": "lib",
     "test": "test"
@@ -29,7 +28,8 @@
   "homepage": "https://github.com/sonicoriginalsoftware/component-framework#readme",
   "devDependencies": {
     "@sonicoriginalsoftware/jester": "^0.2.4",
-    "typescript": "^3.8.0"
+    "typescript": "^3.8.0",
+    "firebase-tools": "^8.6.0"
   },
   "dependencies": {}
 }

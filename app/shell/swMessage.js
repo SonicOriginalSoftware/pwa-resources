@@ -9,7 +9,7 @@ export async function messageServiceWorker(
 ) {
   if (!sw) {
     console.error('Service worker not ready for messaging')
-    return Promise.resolve({})
+    return Promise.resolve({ name: "", version: ""})
   }
   const messageChannel = new MessageChannel()
   messageChannel.port1.start() // Required when using eventListener interface

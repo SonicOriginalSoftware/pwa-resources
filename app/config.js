@@ -13,9 +13,8 @@ const oauthInfo = Object.freeze({
   apiKey: {},
 })
 
-const objectStores = Object.freeze({
-  auth: [],
-})
+/** @type {{String: String[]} | {}} */
+const objectStores = Object.freeze({})
 
 const CACHED_URLS = Object.freeze({
   'app-components': [],
@@ -33,8 +32,10 @@ const CACHED_URLS = Object.freeze({
   apis: [],
 })
 
+/** @type {String[]} */
 const FETCH_WHITELIST = []
 
+/** @type {String[]} */
 const CACHE_AFTER_FETCH_WHITELIST = []
 
 async function preDBUpgrade() {

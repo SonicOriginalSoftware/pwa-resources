@@ -65,7 +65,7 @@ async function upgradeDB(db) {
 
   // TODO Could parallelize this...
   for (
-    const eachStoreNameIndex = 0;
+    let eachStoreNameIndex = 0;
     eachStoreNameIndex < db.objectStoreNames.length;
     ++eachStoreNameIndex
   ) {
@@ -113,7 +113,7 @@ async function installCaches() {
       new Promise(async resolve =>
         resolve(
           await (await caches.open(eachCacheKey)).addAll(
-            appCaches[eachCacheKey]
+            appCaches.get(eachCacheKey)
           )
         )
       )
@@ -123,6 +123,11 @@ async function installCaches() {
   console.log('Caches installed!')
 }
 
+/**
+ *
+ * @param {String} path
+ * @param {Request} request
+ */
 async function getCacheResponse(path, request) {
   let response
   try {
@@ -255,6 +260,7 @@ function fetchCallback(fetchEvent) {
 
 /** @type {Map<String, String[]>} */
 const appCaches = {
+  /** @type {String[]} */
   'cache-after-fetch': [],
   'shell-cache': [
     '/',

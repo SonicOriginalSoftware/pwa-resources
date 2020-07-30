@@ -10,7 +10,7 @@ async function loadInitialComponents() {
   for (const [id, component] of components) {
     loadComponentsPromises.push(
       new Promise(async (resolve, reject) => {
-        appStatusElement.insertAdjacentHTML(
+        appStatusElement?.insertAdjacentHTML(
           'beforeend',
           `<span style='display: block;' id='load-${id}'>Loading ${id}...</span>`
         )
@@ -93,10 +93,10 @@ export async function registerComponents() {
   //   `@import '/themes/default_light.css'`
   // )
 
-  const theme = await themeFetch
-  document.adoptedStyleSheets = [...document.adoptedStyleSheets, theme]
+  // const theme = await themeFetch
+  // document.adoptedStyleSheets = [...document.adoptedStyleSheets, theme]
 
-  appStatusElement.remove()
+  appStatusElement?.remove()
 }
 
 /**
@@ -116,7 +116,7 @@ navigator.serviceWorker.addEventListener('controllerchange', () => {
 })
 
 navigator.serviceWorker
-  .register('/shell/sw.js', {
+  .register('sw.js', {
     scope: '/',
     updateViaCache: 'none',
     // type: 'module',
