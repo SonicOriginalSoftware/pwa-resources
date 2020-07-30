@@ -1,0 +1,44 @@
+/* Component base-class css classes that can be applied */
+.hidden {
+  display: none !important;
+}
+.disabled {
+  pointer-events: none;
+}
+.display-block {
+  display: block;
+}
+.center-align-text {
+  text-align: center;
+}
+.borderless {
+  border: none;
+}
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+.clickable {
+  cursor: pointer;
+}
+.clickable:disabled {
+  cursor: not-allowed;
+}
+.clickthrough {
+  pointer-events: none;
+}
+
+.icon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.close {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgb(255, 255, 255)" d="M 19 6.4 L 17.6 5 L 12 10.6 L 6.4 5 L 5 6.4 L 10.6 12 L 5 17.6 L 6.4 19 L 12 13.4 L 17.6 19 L 19 17.6 L 13.4 12 z"/><path d="M 0 0 h 24 v 24 H 0 z" fill="none"/></svg>');
+}
+
+.code {
+  font-family: monospace;
+}

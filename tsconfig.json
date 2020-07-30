@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "lib": ["ES6", "DOM"],
+    "module": "ESNext",
+    "target": "ES6",
+    "allowJs": true,
+    "checkJs": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "moduleResolution": "Node",
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "outDir": "dist"
+  },
+  "files": [
+    "index.js"
+  ],
+  "include": [
+    "bin",
+    "lib",
+    "tests"
+  ],
+  "exclude": [
+    "coverage", "node_modules"
+  ]
+}

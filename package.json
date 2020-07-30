@@ -1,0 +1,35 @@
+{
+  "name": "component-framework",
+  "version": "0.1.0",
+  "description": "Front-end web app framework based on Web Components",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx -n '--experimental-json-modules @sonicoriginalsoftware/jester"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonicoriginalsoftware/component-framework.git"
+  },
+  "keywords": [
+    "web",
+    "componets",
+    "front-end",
+    "app"
+  ],
+  "author": "Nathan Blair",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sonicoriginalsoftware/component-framework/issues"
+  },
+  "homepage": "https://github.com/sonicoriginalsoftware/component-framework#readme",
+  "devDependencies": {
+    "@sonicoriginalsoftware/jester": "^0.2.4",
+    "typescript": "^3.8.0"
+  },
+  "dependencies": {}
+}

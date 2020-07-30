@@ -1,0 +1,6 @@
+#toast-lane {
+  position: fixed;
+  top: 10px;
+  width: 100%;
+  z-index: 20;
+}
