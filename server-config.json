@@ -1,0 +1,5 @@
+{
+  "serve_directory": "app",
+  "port": 5000,
+  "host": "localhost"
+}

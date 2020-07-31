@@ -4,5 +4,20 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "node",
+				"request": "launch",
+				"runtimeArgs": ["--experimental-json-modules"],
+				"name": "Run server",
+				"skipFiles": [
+					"<node_internals>/**"
+				],
+				"program": "server.js"
+			}
+		]
+	}
 }

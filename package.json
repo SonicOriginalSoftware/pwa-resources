@@ -7,6 +7,7 @@
     "test": "test"
   },
   "scripts": {
+    "start": "node --experimental-json-modules server.js",
     "test": "npx -n '--experimental-json-modules @sonicoriginalsoftware/jester"
   },
   "type": "module",
@@ -28,8 +29,8 @@
   "homepage": "https://github.com/sonicoriginalsoftware/component-framework#readme",
   "devDependencies": {
     "@sonicoriginalsoftware/jester": "^0.2.4",
-    "typescript": "^3.8.0",
-    "firebase-tools": "^8.6.0"
+    "@types/node": "^14.0.27",
+    "typescript": "^3.8.0"
   },
   "dependencies": {}
 }

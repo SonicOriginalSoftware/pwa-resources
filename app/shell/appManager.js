@@ -116,7 +116,7 @@ navigator.serviceWorker.addEventListener('controllerchange', () => {
 })
 
 navigator.serviceWorker
-  .register('sw.js', {
+  .register('/shell/sw.js', {
     scope: '/',
     updateViaCache: 'none',
     // type: 'module',
