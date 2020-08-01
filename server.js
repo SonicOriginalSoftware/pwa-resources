@@ -5,11 +5,11 @@ import config from "./server-config.json"
 
 /** @param {import('http2').IncomingHttpHeaders} headers */
 function generate_request(headers) {
-  const request_path = headers[http2Constants.HTTP2_HEADER_PATH].slice(1)
+  const request_path = headers[":path"]
   const queryOperatorIndex = request_path?.indexOf("?")
 
   return {
-    method: headers[http2Constants.HTTP2_HEADER_METHOD],
+    method: headers[":method"],
     resource_path:
       queryOperatorIndex !== -1
         ? request_path?.slice(0, queryOperatorIndex)
@@ -18,7 +18,7 @@ function generate_request(headers) {
       queryOperatorIndex !== -1
         ? request_path?.slice(queryOperatorIndex + 1)
         : "",
-    referer: headers[http2Constants.HTTP2_HEADER_REFERER],
+    referer: headers["referer"],
     payload: null,
   }
 }
@@ -47,48 +47,29 @@ function get_content_type(file) {
   }
 }
 
-/** @param {String} resource_path */
-function generate_response_headers(resource_path) {
-  const response_headers = {
-    [http2Constants.HTTP2_HEADER_STATUS]: http2Constants.HTTP_STATUS_OK,
-    [http2Constants.HTTP2_HEADER_CONTENT_TYPE]: get_content_type(resource_path),
-  }
-
-  if (resource_path.includes("sw.js")) {
-    response_headers["Service-Worker-Allowed"] = "/"
-  }
-
-  return response_headers
-}
-
-/** @param {[String, import('http2').ServerHttp2Stream]} pushable_resource_tuple */
-function create_push_stream_promise(pushable_resource_tuple) {
-  return new Promise((resolve, reject) => {
-    const resource_path = pushable_resource_tuple[0]
-    pushable_resource_tuple[1].pushStream(
-      generate_response_headers(resource_path),
-      (err, pushStream) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve([resource_path, pushStream])
-        }
-      }
-    )
-  })
-}
-
 /** @param {import('http2').ServerHttp2Stream} stream */
 async function push_handler(stream) {
   /** @type {[string, import('http2').ServerHttp2Stream][]} */
   let mapped_pushes = []
 
+  const push_promises = config.pushable_resources.map(
+    (resource_path) =>
+      new Promise((resolve, reject) => {
+        stream.pushStream(
+          { [http2Constants.HTTP2_HEADER_PATH]: resource_path },
+          (err, pushStream) => {
+            if (err) {
+              reject(err)
+            } else {
+              resolve([resource_path, pushStream])
+            }
+          }
+        )
+      })
+  )
+
   try {
-    mapped_pushes = await Promise.all(
-      config.pushable_resources
-        .map((resource) => [`${config.serve_directory}${resource}`, stream])
-        .map(create_push_stream_promise)
-    )
+    mapped_pushes = await Promise.all(push_promises)
   } catch (ex) {
     console.error(ex)
     return
@@ -96,9 +77,6 @@ async function push_handler(stream) {
 
   for (const [each_resource_path, each_push_stream] of mapped_pushes) {
     respond(each_push_stream, each_resource_path)
-    console.log(
-      `[SERVER] Pushed: ${each_resource_path} - from stream id: ${each_push_stream.id}`
-    )
   }
 }
 
@@ -118,7 +96,16 @@ async function extract_payload(stream) {
  * @param {String} resource_path
  */
 function respond(stream, resource_path) {
-  const response_headers = generate_response_headers(resource_path)
+  resource_path = `${config.serve_directory}${resource_path}`
+
+  const response_headers = {
+    [http2Constants.HTTP2_HEADER_STATUS]: http2Constants.HTTP_STATUS_OK,
+    [http2Constants.HTTP2_HEADER_CONTENT_TYPE]: get_content_type(resource_path),
+  }
+
+  if (resource_path.includes("sw.js")) {
+    response_headers["Service-Worker-Allowed"] = "/"
+  }
 
   /** @type {String | Buffer} */
   let content = "<html><body>File not found!</body></html>"
@@ -147,12 +134,10 @@ async function on_stream(stream, headers) {
   const request = generate_request(headers)
 
   let push_promise = null
-  if (request.resource_path === "") {
-    request.resource_path = "index.html"
+  if (request.resource_path === "/") {
+    request.resource_path = "/index.html"
     push_promise = push_handler(stream)
   }
-
-  request.resource_path = `${config.serve_directory}/${request.resource_path}`
 
   console.log(`[SERVER] Incoming request: ${JSON.stringify(request)}`)
 
