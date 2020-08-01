@@ -1,5 +1,9 @@
 {
   "serve_directory": "app",
   "port": 5000,
-  "host": "localhost"
+  "host": "localhost",
+  "pushable_resources": [
+    "/manifest.json",
+    "/shell/sw.js"
+  ]
 }

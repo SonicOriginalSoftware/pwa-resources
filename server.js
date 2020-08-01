@@ -2,7 +2,26 @@ import { createSecureServer, constants as http2Constants } from "http2"
 import { readFileSync } from "fs"
 
 import config from "./server-config.json"
-import { rejects } from "assert"
+
+/** @param {import('http2').IncomingHttpHeaders} headers */
+function generate_request(headers) {
+  const request_path = headers[http2Constants.HTTP2_HEADER_PATH].slice(1)
+  const queryOperatorIndex = request_path?.indexOf("?")
+
+  return {
+    method: headers[http2Constants.HTTP2_HEADER_METHOD],
+    resource_path:
+      queryOperatorIndex !== -1
+        ? request_path?.slice(0, queryOperatorIndex)
+        : request_path,
+    query:
+      queryOperatorIndex !== -1
+        ? request_path?.slice(queryOperatorIndex + 1)
+        : "",
+    referer: headers[http2Constants.HTTP2_HEADER_REFERER],
+    payload: null,
+  }
+}
 
 /** @param {String} file */
 function get_content_type(file) {
@@ -28,45 +47,94 @@ function get_content_type(file) {
   }
 }
 
-/** @param {String} file */
-function get_headers(file) {
-  const headers = {
+/** @param {String} resource_path */
+function generate_response_headers(resource_path) {
+  const response_headers = {
     [http2Constants.HTTP2_HEADER_STATUS]: http2Constants.HTTP_STATUS_OK,
-    [http2Constants.HTTP2_HEADER_CONTENT_TYPE]: get_content_type(file),
+    [http2Constants.HTTP2_HEADER_CONTENT_TYPE]: get_content_type(resource_path),
   }
 
-  if (file.includes("sw.js")) {
-    headers["Service-Worker-Allowed"] = "/"
+  if (resource_path.includes("sw.js")) {
+    response_headers["Service-Worker-Allowed"] = "/"
   }
 
-  return headers
+  return response_headers
+}
+
+/** @param {[String, import('http2').ServerHttp2Stream]} pushable_resource_tuple */
+function create_push_stream_promise(pushable_resource_tuple) {
+  return new Promise((resolve, reject) => {
+    const resource_path = pushable_resource_tuple[0]
+    pushable_resource_tuple[1].pushStream(
+      generate_response_headers(resource_path),
+      (err, pushStream) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve([resource_path, pushStream])
+        }
+      }
+    )
+  })
 }
 
 /** @param {import('http2').ServerHttp2Stream} stream */
-function push_handler(stream) {
-  const pushable_resources = ["app/manifest.json", "app/shell/sw.js"]
-  return Promise.all([
-    new Promise((resolve, reject) => {
-      const resource_path = "app/manifest.json"
-      stream.pushStream(get_headers(resource_path), (err, pushStream) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve([resource_path, pushStream])
-        }
+async function push_handler(stream) {
+  /** @type {[string, import('http2').ServerHttp2Stream][]} */
+  let mapped_pushes = []
+
+  try {
+    mapped_pushes = await Promise.all(
+      config.pushable_resources
+        .map((resource) => [`${config.serve_directory}${resource}`, stream])
+        .map(create_push_stream_promise)
+    )
+  } catch (ex) {
+    console.error(ex)
+    return
+  }
+
+  for (const [each_resource_path, each_push_stream] of mapped_pushes) {
+    respond(each_push_stream, each_resource_path)
+    console.log(
+      `[SERVER] Pushed: ${each_resource_path} - from stream id: ${each_push_stream.id}`
+    )
+  }
+}
+
+/** @param {import('http2').ServerHttp2Stream} stream */
+async function extract_payload(stream) {
+  return stream.readable
+    ? stream.read()
+    : await new Promise((resolve, reject) => {
+        stream.on("readable", (err) => {
+          err ? reject(err) : resolve(stream.read())
+        })
       })
-    }),
-    new Promise((resolve, reject) => {
-      const resource_path = "app/shell/sw.js"
-      stream.pushStream(get_headers(resource_path), (err, pushStream) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve([resource_path, pushStream])
-        }
-      })
-    }),
-  ])
+}
+
+/**
+ * @param {import('http2').ServerHttp2Stream} stream
+ * @param {String} resource_path
+ */
+function respond(stream, resource_path) {
+  const response_headers = generate_response_headers(resource_path)
+
+  /** @type {String | Buffer} */
+  let content = "<html><body>File not found!</body></html>"
+  try {
+    content = readFileSync(resource_path)
+  } catch (ex) {
+    response_headers[http2Constants.HTTP2_HEADER_STATUS] =
+      http2Constants.HTTP_STATUS_NOT_FOUND
+    response_headers[http2Constants.HTTP2_HEADER_CONTENT_TYPE] = "text/html"
+  }
+  stream.respond(response_headers)
+  stream.write(content)
+  console.log(
+    `[SERVER] Responded to: ${resource_path} - from stream id: ${stream.id}`
+  )
+  stream.end()
 }
 
 /**
@@ -75,67 +143,26 @@ function push_handler(stream) {
  */
 async function on_stream(stream, headers) {
   stream.on("error", console.error)
-  stream.on("readable", () => {}) // TODO This dictates the body of a payload
 
-  const request_path = headers[http2Constants.HTTP2_HEADER_PATH]?.slice(1)
-  const queryOperatorIndex = request_path?.indexOf("?")
+  const request = generate_request(headers)
 
-  const request = {
-    method: headers[http2Constants.HTTP2_HEADER_METHOD],
-    resource_path:
-      queryOperatorIndex !== -1
-        ? request_path?.slice(0, queryOperatorIndex)
-        : request_path,
-    query:
-      queryOperatorIndex !== -1
-        ? request_path?.slice(queryOperatorIndex + 1)
-        : "",
-    referer: headers[http2Constants.HTTP2_HEADER_REFERER],
-    payload: null,
-  }
-
+  let push_promise = null
   if (request.resource_path === "") {
     request.resource_path = "index.html"
-    /** @type {[string, import('http2').ServerHttp2Stream][]} */
-    let push_map = []
-    try {
-      push_map = await push_handler(stream)
-    } catch (ex) {
-      console.error(ex)
-    }
-
-    for (const [each_resource_path, each_push_stream] of push_map) {
-      each_push_stream.respondWithFile(each_resource_path)
-    }
+    push_promise = push_handler(stream)
   }
 
   request.resource_path = `${config.serve_directory}/${request.resource_path}`
 
-  console.log(`[STREAM] ${JSON.stringify(request)}`)
+  console.log(`[SERVER] Incoming request: ${JSON.stringify(request)}`)
 
   if (request.method === "POST") {
-    request.payload = await new Promise((resolve, reject) => {
-      stream.on("readable", (err) => {
-        err ? reject(err) : resolve(stream.read())
-      })
-    })
+    request.payload = await extract_payload(stream)
     console.log(`Request payload: ${request.payload}`)
   }
 
-  const response_headers = get_headers(request.resource_path)
-  let content = null
-  try {
-    content = readFileSync(request.resource_path)
-  } catch (ex) {
-    content = "<html><body>File not found!</body></html>"
-    response_headers[http2Constants.HTTP2_HEADER_STATUS] =
-      http2Constants.HTTP_STATUS_NOT_FOUND
-    response_headers[http2Constants.HTTP2_HEADER_CONTENT_TYPE] = "text/html"
-  }
-
-  stream.respond(response_headers)
-  stream.write(content)
-  stream.end()
+  respond(stream, request.resource_path)
+  if (push_promise !== null) await push_promise
 }
 
 async function main() {
