@@ -2,10 +2,32 @@ const appStatusElement = document.getElementById("app-status")
 
 /** @type {Map<String, import('../lib/components/component.js').Component>} */
 let components = new Map()
-/** @type {ServiceWorkerRegistration} */
-let serviceWorkerRegistration
+/** @type {{'name': String, version: String}} */
+let info
 
-async function loadInitialComponents() {
+/** @param {ServiceWorkerRegistration} registered_service_worker */
+async function service_worker_registered(registered_service_worker) {
+  if (!registered_service_worker || !registered_service_worker.active) {
+    if (registered_service_worker && registered_service_worker.installing)
+      handle_error("Service worker stuck installing!")
+
+    handle_error("App was not registered correctly.")
+    return
+  }
+
+  const sw_module = await import("/lib/service-worker/service_worker.js")
+  info = await sw_module.message(
+    sw_module.messages.get_app_info,
+    registered_service_worker.active
+  )
+  document.title = info.name
+  register_components()
+  if (registered_service_worker.waiting) {
+    // TODO emit the app_update event
+  }
+}
+
+async function load_initial_components() {
   const loadComponentsPromises = []
   for (const [id, component] of components) {
     loadComponentsPromises.push(
@@ -38,36 +60,28 @@ async function loadInitialComponents() {
  *
  * Note that there may be a service worker waiting as well
  */
-export async function registerComponents() {
-  if (!serviceWorkerRegistration || !serviceWorkerRegistration.active) {
-    if (serviceWorkerRegistration && serviceWorkerRegistration.installing)
-      handleAppManagerError(
-        "No service worker registered! App was not registered correctly."
-      )
-    return
-  }
-
+export async function register_components() {
   let initModule
   try {
     initModule = await import("../init.js")
   } catch (reason) {
-    handleAppManagerError(`${reason.message} - Couldn't import init module`)
+    handle_error(`${reason.message} - Couldn't import init module`)
     return
   }
 
   try {
-    await initModule.addInitialComponents(serviceWorkerRegistration, components)
+    await initModule.addInitialComponents(components)
   } catch (reason) {
-    handleAppManagerError(
+    handle_error(
       `${reason.message} - Failed adding ${reason.component} component`
     )
     return
   }
 
   try {
-    await loadInitialComponents()
+    await load_initial_components()
   } catch (reason) {
-    handleAppManagerError(
+    handle_error(
       `${reason.message} - Failed loading ${reason.component} component`
     )
     return
@@ -76,32 +90,22 @@ export async function registerComponents() {
   try {
     await initModule.attachInitialComponents(components)
   } catch (reason) {
-    handleAppManagerError(
+    handle_error(
       `${reason.message} - Failed attaching ${reason.component} component`
     )
     return
   }
 
-  // This should be handled by the Theme component
-  // As in, NOT using Constructable stylesheets. Because they SUCK too.
-  // const defaultLightTheme = new CSSStyleSheet()
-  // const themeFetch = defaultLightTheme.replace(
-  //   `@import '/themes/default_light.css'`
-  // )
-
-  // const theme = await themeFetch
-  // document.adoptedStyleSheets = [...document.adoptedStyleSheets, theme]
-
   appStatusElement?.remove()
 }
 
 /** @param {any} err Error to display to `console.error` */
-function handleAppManagerError(err) {
+function handle_error(err) {
   appStatusElement.innerHTML = err || "Web app failed to load"
   console.error(err)
 }
 
-window.addEventListener("load", registerComponents)
+window.addEventListener("load", async () => {})
 
 navigator.serviceWorker.addEventListener("controllerchange", () => {
   sessionStorage.clear()
@@ -114,5 +118,5 @@ navigator.serviceWorker
     updateViaCache: "none",
     // type: 'module',
   })
-  .then((reg) => (serviceWorkerRegistration = reg))
-  .catch(handleAppManagerError)
+  .then(service_worker_registered)
+  .catch(handle_error)

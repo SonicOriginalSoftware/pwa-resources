@@ -23,6 +23,7 @@ class ToastLane extends HTMLElement {
     })
   }
 
+  // FIXME This should be registered as a listener for the app_update event
   async showToast(message, timeout) {
 
   }

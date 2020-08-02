@@ -1,9 +1,8 @@
 import { IndexedDB } from '../../../indexedDB/indexedDb.js'
-import { messageServiceWorker } from '../../../../shell/swMessage.js'
 import { GoogleOAuth } from './google/auth.js'
-import * as FirebaseAuth from '../../../apis/google/firebase_auth.js'
-
-/** @typedef {import('./providerId.js').ProviderId} ProviderId */
+import { messages } from '/shell/messages.js'
+import { AppInfo } from '/lib/components/app/info.js'
+import * as FirebaseAuth from '../../../apis/google/firebase/firebase_auth.js'
 
 function tokenValidated() {
   // TODO Have firebase validate the token?
@@ -16,8 +15,12 @@ async function handleTokenChange() {}
 async function storeUserInPersistentStorage(userEventData) {
   const userDataPromise = userEventData.detail.json()
 
-  const dbInfo = await messageServiceWorker('getDbInfo')
-  const idb = new IndexedDB(dbInfo.name, dbInfo.version)
+  const db_info = await AppInfo.messageServiceWorker(messages.get_db_info)
+  // FIXME Should NOT be creating a new IndexedDB here! What!?
+  // Open the indexeddb with the db_info.name and version
+  // And then store the relevant information in whatever the app maintainers
+  // have chosen to call their authentication object store!
+  const idb = new IndexedDB(db_info.name, db_info.version)
 
   const userData = await userDataPromise
 

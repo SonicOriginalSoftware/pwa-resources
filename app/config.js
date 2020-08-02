@@ -20,23 +20,11 @@ const object_stores = []
 const CACHED_URLS = [
   ["app-components", []],
   ["framework-components", []],
-  ["component", ["/lib/components/component.js", "/lib/components/style.css"]],
+  ["component", []],
   ["images", []],
-  [
-    "icons",
-    ["/icons/icon-192px.png", "/icons/icon-512px.png", "/favicon.ico"],
-  ],
-  [
-    "core-elements",
-    [
-      "/lib/components/core-elements/inputs/button.js",
-      "/lib/components/core-elements/inputs/checkbox.js",
-      "/lib/components/core-elements/element-component.js",
-      "/lib/components/core-elements/input.js",
-      "/lib/components/core-elements/label.js",
-    ],
-  ],
-  ["themes", ["/themes/default_light.css"]],
+  ["icons", []],
+  ["core-elements", []],
+  ["themes", ["/themes/default_light.css", "/themes/default_dark.css"]],
   ["indexedDB", []],
   ["apis", []],
 ]

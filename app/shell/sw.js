@@ -4,7 +4,7 @@ async function remove_obselete_databases() {
   if (navigator.userAgent.match(/firefox/i) !== null) {
     console.error(
       "Sorry, you appear to be using the shitty Firefox browser. " +
-        "Until the asshat devs pull their heads out they asses, " +
+        "Until the dumbass devs pull their heads out they asses, " +
         "you won't be able to use this app properly."
     )
     return
@@ -28,7 +28,10 @@ async function remove_obselete_databases() {
 /** Handles shell indexedDB creation */
 function install_db() {
   return new Promise((resolve, reject) => {
-    const indexed_db_open_request = indexedDB.open(db_info.name, db_info.version)
+    const indexed_db_open_request = indexedDB.open(
+      db_info.name,
+      db_info.version
+    )
 
     indexed_db_open_request.addEventListener("error", (ev) => {
       console.error(ev)
@@ -200,25 +203,25 @@ function handle_activate(activate_event) {
  */
 async function handle_message(message_event) {
   switch (message_event.data) {
-    case "getAppInfo":
+    case "get_app_info":
       message_event.ports[0].postMessage({
         name: app_info.name,
         version: app_info.version,
       })
       break
-    case "getDbInfo":
+    case "get_db_info":
       message_event.ports[0].postMessage({
         name: db_info.name,
         version: db_info.version,
       })
       break
-    case "getOAuthInfo":
+    case "get_oauth_info":
       message_event.ports[0].postMessage({
         clientId: oauth_info.clientId,
         apiKey: oauth_info.apiKey,
       })
       break
-    case "skipWaiting":
+    case "update":
       self.skipWaiting()
       break
   }
@@ -284,11 +287,14 @@ const app_caches = [
       "/",
       "/app.css",
       "/config.js",
+      "/favicon.ico",
       "/init.js",
-      "/shell/appManager.js",
+      "/lib/service-worker/service_worker.js",
+      "/shell/app_manager.js",
       "/manifest.json",
     ],
   ],
+  ["pwa-icons", ["/icons/icon-192px.png", "/icons/icon-512px.png"]],
   ...CACHED_URLS,
 ]
 

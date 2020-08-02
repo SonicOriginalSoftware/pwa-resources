@@ -1,7 +1,7 @@
 {
   "name": "Your App Name",
   "short_name": "App Name",
-  "start_url": "../app/",
+  "start_url": "/",
   "icons": [
     {
       "src": "icons/icon-192px.png",

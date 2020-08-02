@@ -14,6 +14,8 @@ export async function initialize() {
   showChangelogElement.addEventListener('click', showChangelog)
 }
 
+// FIXME This method should also be registered as a listener to the
+// app_update event being fired
 export async function showChangelog(newVersion) {
   const changelogRequest = fetch('../pages/changelog.html')
   const changelogLink = document.createElement('link')

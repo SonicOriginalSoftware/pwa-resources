@@ -1,13 +1,9 @@
 /**
  * Add the initial components that will appear immediately following a page load
  *
- * @param {ServiceWorkerRegistration} serviceWorkerRegistration
  * @param {Map<String, import('./lib/components/component.js').Component>} components
  */
-export async function addInitialComponents(
-  serviceWorkerRegistration,
-  components
-) {
+export async function addInitialComponents(components) {
   // TODO import all the other components that are initially required
 }
 

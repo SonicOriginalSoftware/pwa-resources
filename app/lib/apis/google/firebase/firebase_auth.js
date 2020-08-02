@@ -2,7 +2,7 @@
  * @param {String} apiKey
  * @param {String} returnUrl
  * @param {String} accessToken
- * @param {keyof import('../../auth/providerId.js').ProviderId} providerId
+ * @param {keyof import('/lib/auth/providerId.js').ProviderId} providerId
  */
 export async function signIn(apiKey, returnUrl, accessToken, providerId) {
   const payload = {
