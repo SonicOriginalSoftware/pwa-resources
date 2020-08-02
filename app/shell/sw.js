@@ -1,19 +1,32 @@
 importScripts("../config.js")
 
-async function removeObsoleteDatabases() {
+async function remove_obselete_databases() {
+  if (navigator.userAgent.match(/firefox/i) !== null) {
+    console.error(
+      "Sorry, you appear to be using the shitty Firefox browser. " +
+        "Until the asshat devs pull their heads out they asses, " +
+        "you won't be able to use this app properly."
+    )
+    return
+  }
+
   console.log(`Removing obsolete databases...`)
-  for (const eachDatabase of await indexedDB.databases()) {
-    if (eachDatabase.name !== db_info.name) {
-      console.log(`Removing ${eachDatabase.name}...`)
-      indexedDB.deleteDatabase(eachDatabase.name)
-      console.log(`Removed ${eachDatabase.name}!`)
+  for (const [
+    each_database_name,
+    each_database_version,
+  ] of await indexedDB.databases()) {
+    if (each_database_version === db_info.version) continue
+    if (each_database_name !== db_info.name) {
+      console.log(`Removing ${each_database_name}...`)
+      indexedDB.deleteDatabase(each_database_name)
+      console.log(`Removed ${each_database_name}!`)
     }
   }
   console.log(`Obsolete databases removed!`)
 }
 
 /** Handles shell indexedDB creation */
-function installDB() {
+function install_db() {
   return new Promise((resolve, reject) => {
     const indexedDBOpenRequest = indexedDB.open(db_info.name, db_info.version)
 
@@ -24,7 +37,7 @@ function installDB() {
 
     indexedDBOpenRequest.addEventListener("upgradeneeded", async () => {
       console.log(`${indexedDBOpenRequest.result.name} needs upgraded...`)
-      await upgradeDB(indexedDBOpenRequest.result)
+      await upgrade_db(indexedDBOpenRequest.result)
     })
 
     indexedDBOpenRequest.addEventListener("success", (_) => {
@@ -58,7 +71,7 @@ function installDB() {
  *
  * @param {IDBDatabase} db
  */
-async function upgradeDB(db) {
+async function upgrade_db(db) {
   console.log(`Upgrading ${db.name}...`)
   await preDBUpgrade()
 
@@ -90,29 +103,33 @@ async function upgradeDB(db) {
   console.log(`${db.name} upgraded!`)
 }
 
-async function removeAllCaches() {
+async function remove_all_caches() {
   console.log("Removing all caches...")
   await Promise.all(
     (await caches.keys()).map(
       (each_cache_name) =>
-        new Promise((resolve) => resolve(caches.delete(each_cache_name)))
+        new Promise((resolve) => {
+          console.log(`Removing cache: ${each_cache_name}`)
+          resolve(caches.delete(each_cache_name))
+        })
     )
   )
   console.log("All caches removed!")
 }
 
-async function installCaches() {
-  console.log("Installing caches...")
+async function install_caches() {
+  console.log("Installing all caches...")
   await Promise.all(
     app_caches.map(
       (each_cache_tuple) =>
-        new Promise(async (resolve) =>
+        new Promise(async (resolve) => {
+          console.log(`Adding cache: ${each_cache_tuple[0]}`)
           resolve(
             await (await caches.open(each_cache_tuple[0])).addAll(
               each_cache_tuple[1]
             )
           )
-        )
+        })
     )
   )
   console.log("Caches installed!")
@@ -122,7 +139,7 @@ async function installCaches() {
  * @param {String} path
  * @param {Request} request
  */
-async function getCacheResponse(path, request) {
+async function get_cache_response(path, request) {
   let response
   try {
     for (const eachCacheName of await caches.keys()) {
@@ -147,11 +164,11 @@ async function getCacheResponse(path, request) {
 }
 
 /** @param {ExtendableEvent} installEvent */
-function installCallback(installEvent) {
+function handle_install(installEvent) {
   console.log("Installing app...")
   installEvent.waitUntil(
     new Promise(async (resolve) => {
-      await Promise.all([installDB()])
+      await Promise.all([install_db()])
       console.log("App installed!")
       resolve()
     })
@@ -159,13 +176,12 @@ function installCallback(installEvent) {
 }
 
 /** @param {ExtendableEvent} activateEvent */
-function activateCallback(activateEvent) {
+function handle_activate(activateEvent) {
   console.log("Activating...")
   activateEvent.waitUntil(
     new Promise(async (resolve) => {
-      await Promise.all([removeObsoleteDatabases(), removeAllCaches()])
-      console.log("First stage done; installing caches...")
-      await installCaches()
+      await Promise.all([remove_obselete_databases(), remove_all_caches()])
+      await install_caches()
       self.clients.claim()
       console.log("Activated!")
       resolve()
@@ -182,7 +198,7 @@ function activateCallback(activateEvent) {
  *
  * @param {ExtendableMessageEvent} messageEvent
  */
-async function messageCallback(messageEvent) {
+async function handle_message(messageEvent) {
   switch (messageEvent.data) {
     case "getAppInfo":
       messageEvent.ports[0].postMessage({
@@ -221,7 +237,7 @@ async function messageCallback(messageEvent) {
  *
  * @param {FetchEvent} fetchEvent
  */
-function fetchCallback(fetchEvent) {
+function handle_fetch(fetchEvent) {
   const request = fetchEvent.request
   const url = new URL(request.url)
   const path = url.pathname
@@ -236,7 +252,7 @@ function fetchCallback(fetchEvent) {
         try {
           fetchResponse = await fetch(request)
         } catch (err) {
-          resolve(getCacheResponse(path, request))
+          resolve(get_cache_response(path, request))
           return
         }
 
@@ -249,7 +265,7 @@ function fetchCallback(fetchEvent) {
         }
         resolve(fetchResponse)
       } else {
-        resolve(getCacheResponse(path, request))
+        resolve(get_cache_response(path, request))
       }
     })
   )
@@ -281,7 +297,7 @@ const app_caches = [
 const fetchWhiteList = ["/config.js", ...FETCH_WHITELIST]
 const cacheAfterFetchWhiteList = CACHE_AFTER_FETCH_WHITELIST
 
-self.addEventListener("install", installCallback)
-self.addEventListener("activate", activateCallback)
-self.addEventListener("message", messageCallback)
-self.addEventListener("fetch", fetchCallback)
+self.addEventListener("install", handle_install)
+self.addEventListener("activate", handle_activate)
+self.addEventListener("message", handle_message)
+self.addEventListener("fetch", handle_fetch)

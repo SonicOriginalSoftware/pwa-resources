@@ -14,9 +14,7 @@ const oauth_info = Object.freeze({
 })
 
 /** @type {Array<[String, {'name': String, 'keyPath': String}[]]>} */
-const object_stores = [
-  ['test-store', [{'name': 'test', keyPath: ''}]]
-]
+const object_stores = []
 
 /** @type {Array<[String, String[]]>} */
 const CACHED_URLS = [
