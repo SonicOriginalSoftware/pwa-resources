@@ -14,8 +14,6 @@ async function removeObsoleteDatabases() {
 
 /** Handles shell indexedDB creation */
 function installDB() {
-  console.log(`Opening version ${db_info.version} of ${db_info.name}...`)
-
   return new Promise((resolve, reject) => {
     const indexedDBOpenRequest = indexedDB.open(db_info.name, db_info.version)
 
@@ -24,9 +22,9 @@ function installDB() {
       reject(ev)
     })
 
-    indexedDBOpenRequest.result.addEventListener('close', (ev) => {
-      console.log(`Closed ${db_info.name}`)
-      resolve()
+    indexedDBOpenRequest.addEventListener("upgradeneeded", async () => {
+      console.log(`${indexedDBOpenRequest.result.name} needs upgraded...`)
+      await upgradeDB(indexedDBOpenRequest.result)
     })
 
     indexedDBOpenRequest.addEventListener("success", (_) => {
@@ -47,11 +45,7 @@ function installDB() {
       )
 
       indexedDBOpenRequest.result.close()
-    })
-
-    indexedDBOpenRequest.addEventListener("upgradeneeded", async () => {
-      console.log(`${indexedDBOpenRequest.result.name} needs upgraded...`)
-      await upgradeDB(indexedDBOpenRequest.result)
+      resolve()
     })
   })
 }
@@ -81,7 +75,7 @@ async function upgradeDB(db) {
   }
 
   // TODO Could parallelize this...
-  for (const [each_store_name, each_store_indices] of objectStores) {
+  for (const [each_store_name, each_store_indices] of object_stores) {
     console.log(`Creating object store: '${each_store_name}'...`)
     const objStore = db.createObjectStore(each_store_name)
     for (const each_index of each_store_indices) {
@@ -170,6 +164,7 @@ function activateCallback(activateEvent) {
   activateEvent.waitUntil(
     new Promise(async (resolve) => {
       await Promise.all([removeObsoleteDatabases(), removeAllCaches()])
+      console.log("First stage done; installing caches...")
       await installCaches()
       self.clients.claim()
       console.log("Activated!")

@@ -13,8 +13,10 @@ const oauth_info = Object.freeze({
   apiKey: {},
 })
 
-/** @type {Map<String, {'name': String, 'keyPath': String}[]>} */
-const objectStores = new Map()
+/** @type {Array<[String, {'name': String, 'keyPath': String}[]]>} */
+const object_stores = [
+  ['test-store', [{'name': 'test', keyPath: ''}]]
+]
 
 /** @type {Array<[String, String[]]>} */
 const CACHED_URLS = [
