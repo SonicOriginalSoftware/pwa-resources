@@ -4,6 +4,8 @@ import {
   constants as http2Constants,
 } from "http2"
 import { readFileSync } from "fs"
+import { lookup } from "dns"
+import { hostname } from "os"
 
 import config from "./server-config.json"
 
@@ -165,6 +167,17 @@ async function main() {
 
   server.on("stream", on_stream)
   server.on("error", console.error)
+
+  if (config.host === undefined) {
+    const host = await new Promise((resolve, reject) =>
+      lookup(hostname(), (err, address) =>
+        err ? reject(err) : resolve(address)
+      )
+    )
+    config.host = host
+  } else if (config.host === "") {
+    config.host = "localhost"
+  }
 
   await new Promise((resolve) => {
     server?.listen(config.port, config.host, resolve)

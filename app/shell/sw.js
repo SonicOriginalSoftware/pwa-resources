@@ -28,26 +28,26 @@ async function remove_obselete_databases() {
 /** Handles shell indexedDB creation */
 function install_db() {
   return new Promise((resolve, reject) => {
-    const indexedDBOpenRequest = indexedDB.open(db_info.name, db_info.version)
+    const indexed_db_open_request = indexedDB.open(db_info.name, db_info.version)
 
-    indexedDBOpenRequest.addEventListener("error", (ev) => {
+    indexed_db_open_request.addEventListener("error", (ev) => {
       console.error(ev)
       reject(ev)
     })
 
-    indexedDBOpenRequest.addEventListener("upgradeneeded", async () => {
-      console.log(`${indexedDBOpenRequest.result.name} needs upgraded...`)
-      await upgrade_db(indexedDBOpenRequest.result)
+    indexed_db_open_request.addEventListener("upgradeneeded", async () => {
+      console.log(`${indexed_db_open_request.result.name} needs upgraded...`)
+      await upgrade_db(indexed_db_open_request.result)
     })
 
-    indexedDBOpenRequest.addEventListener("success", (_) => {
-      const result_name = indexedDBOpenRequest.result.name
+    indexed_db_open_request.addEventListener("success", (_) => {
+      const result_name = indexed_db_open_request.result.name
       if (result_name !== db_info.name) {
         reject("Opened the wrong database!")
         return
       }
 
-      const result_version = indexedDBOpenRequest.result.version
+      const result_version = indexed_db_open_request.result.version
       if (result_version !== db_info.version) {
         reject("Opened the wrong database version!")
         return
@@ -57,7 +57,7 @@ function install_db() {
         `Opened version ${db_info.version} of ${db_info.name}. Closing...`
       )
 
-      indexedDBOpenRequest.result.close()
+      indexed_db_open_request.result.close()
       resolve()
     })
   })
@@ -73,7 +73,7 @@ function install_db() {
  */
 async function upgrade_db(db) {
   console.log(`Upgrading ${db.name}...`)
-  await preDBUpgrade()
+  await pre_db_upgrade()
 
   // TODO Could parallelize this...
   for (
@@ -81,25 +81,25 @@ async function upgrade_db(db) {
     eachStoreNameIndex < db.objectStoreNames.length;
     ++eachStoreNameIndex
   ) {
-    const objectStoreName = db.objectStoreNames[eachStoreNameIndex]
-    console.log(`Deleting object store: ${objectStoreName}...`)
-    db.deleteObjectStore(objectStoreName)
-    console.log(`${objectStoreName} deleted!`)
+    const object_store_name = db.objectStoreNames[eachStoreNameIndex]
+    console.log(`Deleting object store: ${object_store_name}...`)
+    db.deleteObjectStore(object_store_name)
+    console.log(`${object_store_name} deleted!`)
   }
 
   // TODO Could parallelize this...
   for (const [each_store_name, each_store_indices] of object_stores) {
     console.log(`Creating object store: '${each_store_name}'...`)
-    const objStore = db.createObjectStore(each_store_name)
+    const object_store = db.createObjectStore(each_store_name)
     for (const each_index of each_store_indices) {
       console.log(`Creating index: ${each_index.name}`)
-      objStore.createIndex(each_index.name, each_index.keyPath)
+      object_store.createIndex(each_index.name, each_index.keyPath)
       console.log(`Created index: ${each_index.name}`)
     }
     console.log(`Created object store: ${each_store_name}`)
   }
 
-  await postDBUpgrade()
+  await post_db_upgrade()
   console.log(`${db.name} upgraded!`)
 }
 
@@ -140,13 +140,13 @@ async function install_caches() {
  * @param {Request} request
  */
 async function get_cache_response(path, request) {
-  let response
+  let response = null
   try {
-    for (const eachCacheName of await caches.keys()) {
-      const eachCache = await caches.open(eachCacheName)
+    for (const each_cache_name of await caches.keys()) {
+      const each_cache = await caches.open(each_cache_name)
       response =
-        (await eachCache.match(path)) ||
-        (await eachCache.match(request, { ignoreSearch: true }))
+        (await each_cache.match(path)) ||
+        (await each_cache.match(request, { ignoreSearch: true }))
       if (response) break
     }
   } catch (err) {
@@ -163,10 +163,10 @@ async function get_cache_response(path, request) {
   )
 }
 
-/** @param {ExtendableEvent} installEvent */
-function handle_install(installEvent) {
+/** @param {ExtendableEvent} install_event */
+function handle_install(install_event) {
   console.log("Installing app...")
-  installEvent.waitUntil(
+  install_event.waitUntil(
     new Promise(async (resolve) => {
       await Promise.all([install_db()])
       console.log("App installed!")
@@ -175,10 +175,10 @@ function handle_install(installEvent) {
   )
 }
 
-/** @param {ExtendableEvent} activateEvent */
-function handle_activate(activateEvent) {
+/** @param {ExtendableEvent} activate_event */
+function handle_activate(activate_event) {
   console.log("Activating...")
-  activateEvent.waitUntil(
+  activate_event.waitUntil(
     new Promise(async (resolve) => {
       await Promise.all([remove_obselete_databases(), remove_all_caches()])
       await install_caches()
@@ -196,24 +196,24 @@ function handle_activate(activateEvent) {
  * as the active service worker
  * If the message is 'getVersion', posts the APP_VERSION to the requesting client
  *
- * @param {ExtendableMessageEvent} messageEvent
+ * @param {ExtendableMessageEvent} message_event
  */
-async function handle_message(messageEvent) {
-  switch (messageEvent.data) {
+async function handle_message(message_event) {
+  switch (message_event.data) {
     case "getAppInfo":
-      messageEvent.ports[0].postMessage({
+      message_event.ports[0].postMessage({
         name: app_info.name,
         version: app_info.version,
       })
       break
     case "getDbInfo":
-      messageEvent.ports[0].postMessage({
+      message_event.ports[0].postMessage({
         name: db_info.name,
         version: db_info.version,
       })
       break
     case "getOAuthInfo":
-      messageEvent.ports[0].postMessage({
+      message_event.ports[0].postMessage({
         clientId: oauth_info.clientId,
         apiKey: oauth_info.apiKey,
       })
@@ -235,18 +235,18 @@ async function handle_message(messageEvent) {
  *
  * If the cached lookup fails, returns a response indicating an error occurred
  *
- * @param {FetchEvent} fetchEvent
+ * @param {FetchEvent} fetch_event
  */
-function handle_fetch(fetchEvent) {
-  const request = fetchEvent.request
+function handle_fetch(fetch_event) {
+  const request = fetch_event.request
   const url = new URL(request.url)
   const path = url.pathname
   const domain = url.origin
-  fetchEvent.respondWith(
+  fetch_event.respondWith(
     new Promise(async (resolve) => {
       if (
-        fetchWhiteList.indexOf(path) >= 0 ||
-        fetchWhiteList.indexOf(domain) >= 0
+        fetch_network_first_list.indexOf(path) >= 0 ||
+        fetch_network_first_list.indexOf(domain) >= 0
       ) {
         let fetchResponse
         try {
@@ -257,11 +257,13 @@ function handle_fetch(fetchEvent) {
         }
 
         if (
-          cacheAfterFetchWhiteList.indexOf(path) >= 0 ||
-          cacheAfterFetchWhiteList.indexOf(domain) >= 0
+          cache_after_fetch_white_list.indexOf(path) >= 0 ||
+          cache_after_fetch_white_list.indexOf(domain) >= 0
         ) {
-          const cacheAfterFetchCache = await caches.open("cache-after-fetch")
-          await cacheAfterFetchCache.put(request, fetchResponse.clone())
+          const cache_after_fetch_cache = await caches.open(
+            cache_after_fetch_cache_name
+          )
+          await cache_after_fetch_cache.put(request, fetchResponse.clone())
         }
         resolve(fetchResponse)
       } else {
@@ -271,31 +273,27 @@ function handle_fetch(fetchEvent) {
   )
 }
 
+const cache_after_fetch_cache_name = "cache-after-fetch"
+
 /** @type {Array<[String, String[]]>} */
 const app_caches = [
-  ["cache-after-fetch", []],
+  [cache_after_fetch_cache_name, []],
   [
     "shell-cache",
     [
       "/",
-      "/images/icon-192px.png",
-      "/images/icon-512px.png",
-      "/lib/semver.js",
-      "/shell/appManager.js",
-      "/shell/swMessage.js",
-      "/themes/default_light.css",
       "/app.css",
       "/config.js",
-      "/favicon.ico",
       "/init.js",
+      "/shell/appManager.js",
       "/manifest.json",
     ],
   ],
   ...CACHED_URLS,
 ]
 
-const fetchWhiteList = ["/config.js", ...FETCH_WHITELIST]
-const cacheAfterFetchWhiteList = CACHE_AFTER_FETCH_WHITELIST
+const fetch_network_first_list = ["/config.js", ...FETCH_NETWORK_FIRST_LIST]
+const cache_after_fetch_white_list = CACHE_AFTER_FETCH_INCLUDE_LIST
 
 self.addEventListener("install", handle_install)
 self.addEventListener("activate", handle_activate)

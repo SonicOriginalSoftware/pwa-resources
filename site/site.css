@@ -4,6 +4,8 @@
 }
 html {
   height: 100%;
+  background-color: #101010;
+  color: #eeeeee;
 }
 body {
   min-height: 100%;

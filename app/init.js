@@ -8,25 +8,6 @@ export async function addInitialComponents(
   serviceWorkerRegistration,
   components
 ) {
-  const pathPrefix = '/lib/components'
-  const appInfoImport = import(`${pathPrefix}/app/info.js`)
-  const toastImport = import(`${pathPrefix}/toast-component/toast-component.js`)
-
-  components.set(
-    'app-info',
-    new (await appInfoImport).AppInfo(serviceWorkerRegistration)
-  )
-
-  components.set(
-    'toast-lane',
-    new (await toastImport).ToastComponent({
-      toastLaneStylePath: '',
-      toastStylePath: '',
-      toastLaneClassList: [],
-      toastClassList: [],
-    })
-  )
-
   // TODO import all the other components that are initially required
 }
 
@@ -34,11 +15,8 @@ export async function addInitialComponents(
  * @param {Map<String, import('./lib/components/component.js').Component>} components
  */
 export async function attachInitialComponents(components) {
-  components.get('app-info').attach()
-
-  components.get('toast-lane').attach(document.body, 'afterbegin')
-  components.get('toast-lane').showToast('Hey!', 0)
-
+  // Add the app-info component to the body
+  // Add the toast-lane component to the body
   // Add the changelog component to the body
   // Add the nav-menu component to the body
   // Add the update component to the nav-menu
