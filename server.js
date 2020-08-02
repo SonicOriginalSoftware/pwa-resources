@@ -1,4 +1,8 @@
-import { createSecureServer, constants as http2Constants } from "http2"
+import {
+  createServer,
+  createSecureServer,
+  constants as http2Constants,
+} from "http2"
 import { readFileSync } from "fs"
 
 import config from "./server-config.json"
@@ -118,9 +122,6 @@ function respond(stream, resource_path) {
   }
   stream.respond(response_headers)
   stream.write(content)
-  console.log(
-    `[SERVER] Responded to: ${resource_path} - from stream id: ${stream.id}`
-  )
   stream.end()
 }
 
@@ -136,7 +137,7 @@ async function on_stream(stream, headers) {
   let push_promise = null
   if (request.resource_path === "/") {
     request.resource_path = "/index.html"
-    push_promise = push_handler(stream)
+    if (stream.pushAllowed) push_promise = push_handler(stream)
   }
 
   console.log(`[SERVER] Incoming request: ${JSON.stringify(request)}`)
@@ -151,22 +152,30 @@ async function on_stream(stream, headers) {
 }
 
 async function main() {
-  var server = createSecureServer({
-    cert: readFileSync("./.security/cert.pem"),
-    key: readFileSync("./.security/key.pem"),
-  })
+  /** @type {import('http2').Http2Server | null} */
+  let server = null
+  if (config.protocol === "https") {
+    server = createSecureServer({
+      cert: readFileSync("./.security/cert.pem"),
+      key: readFileSync("./.security/key.pem"),
+    })
+  } else {
+    server = createServer()
+  }
 
   server.on("stream", on_stream)
   server.on("error", console.error)
 
   await new Promise((resolve) => {
-    server.listen(config.port, config.host, resolve)
+    server?.listen(config.port, config.host, resolve)
   })
   if (!server.listening) {
     console.error(`Could not listen on: ${config.host}:${config.port}`)
     return
   }
-  console.log(`Server listening on ${config.host}:${config.port}`)
+  console.log(
+    `Server listening on ${config.protocol}://${config.host}:${config.port}`
+  )
 }
 
 main()

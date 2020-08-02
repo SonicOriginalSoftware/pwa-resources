@@ -1,4 +1,4 @@
-versionElement.innerHTML += `&copy; ${new Date().getFullYear()} ${appInfo.name} v${currentAppVersion}`
+versionElement.innerHTML += `&copy; ${new Date().getFullYear()} ${app_info.name} v${currentAppVersion}`
 
 #app-version > span {
   display: block;

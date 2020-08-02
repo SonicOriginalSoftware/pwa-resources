@@ -1,36 +1,37 @@
-const appInfo = Object.freeze({
+const app_info = Object.freeze({
   name: 'App Name Here',
   version: '0.1.0',
 })
 
-const dbInfo = Object.freeze({
+const db_info = Object.freeze({
   name: 'app-db',
   version: 1,
 })
 
-const oauthInfo = Object.freeze({
+const oauth_info = Object.freeze({
   clientId: {},
   apiKey: {},
 })
 
-/** @type {{String: String[]} | {}} */
-const objectStores = Object.freeze({})
+/** @type {Map<String, {'name': String, 'keyPath': String}[]>} */
+const objectStores = new Map()
 
-const CACHED_URLS = Object.freeze({
-  'app-components': [],
-  'framework-components': ['/lib/components/app/info.js'],
-  component: ['/lib/components/component.js', '/lib/components/style.css'],
-  images: [],
-  'core-elements': [
+/** @type {Array<[String, String[]]>} */
+const CACHED_URLS = [
+  ['app-components', []],
+  ['framework-components', ['/lib/components/app/info.js']],
+  ['component', ['/lib/components/component.js', '/lib/components/style.css']],
+  ['images', []],
+  ['core-elements', [
     '/lib/components/core-elements/inputs/button.js',
     '/lib/components/core-elements/inputs/checkbox.js',
     '/lib/components/core-elements/element-component.js',
     '/lib/components/core-elements/input.js',
     '/lib/components/core-elements/label.js',
-  ],
-  indexedDB: [],
-  apis: [],
-})
+  ]],
+  ['indexedDB', []],
+  ['apis', []],
+]
 
 /** @type {String[]} */
 const FETCH_WHITELIST = []

@@ -1,4 +1,4 @@
-const appStatusElement = document.getElementById('app-status')
+const appStatusElement = document.getElementById("app-status")
 
 /** @type {Map<String, import('../lib/components/component.js').Component>} */
 let components = new Map()
@@ -11,7 +11,7 @@ async function loadInitialComponents() {
     loadComponentsPromises.push(
       new Promise(async (resolve, reject) => {
         appStatusElement?.insertAdjacentHTML(
-          'beforeend',
+          "beforeend",
           `<span style='display: block;' id='load-${id}'>Loading ${id}...</span>`
         )
         console.log(`Loading ${id}...`)
@@ -42,17 +42,16 @@ export async function registerComponents() {
   if (!serviceWorkerRegistration || !serviceWorkerRegistration.active) {
     if (serviceWorkerRegistration && serviceWorkerRegistration.installing)
       handleAppManagerError(
-        'No service worker registered!',
-        'The app was not registered correctly.'
+        "No service worker registered! App was not registered correctly."
       )
     return
   }
 
   let initModule
   try {
-    initModule = await import('../init.js')
+    initModule = await import("../init.js")
   } catch (reason) {
-    handleAppManagerError(reason.message, "Couldn't import init module")
+    handleAppManagerError(`${reason.message} - Couldn't import init module`)
     return
   }
 
@@ -60,8 +59,7 @@ export async function registerComponents() {
     await initModule.addInitialComponents(serviceWorkerRegistration, components)
   } catch (reason) {
     handleAppManagerError(
-      reason.message,
-      `Failed adding ${reason.component} component`
+      `${reason.message} - Failed adding ${reason.component} component`
     )
     return
   }
@@ -70,8 +68,7 @@ export async function registerComponents() {
     await loadInitialComponents()
   } catch (reason) {
     handleAppManagerError(
-      reason.message,
-      `Failed loading ${reason.component} component`
+      `${reason.message} - Failed loading ${reason.component} component`
     )
     return
   }
@@ -80,8 +77,7 @@ export async function registerComponents() {
     await initModule.attachInitialComponents(components)
   } catch (reason) {
     handleAppManagerError(
-      reason.message,
-      `Failed attaching ${reason.component} component`
+      `${reason.message} - Failed attaching ${reason.component} component`
     )
     return
   }
@@ -99,26 +95,23 @@ export async function registerComponents() {
   appStatusElement?.remove()
 }
 
-/**
- * @param {any} err Error to display to `console.error`
- * @param {String} reasonText Reason to display to the user
- */
-function handleAppManagerError(err, reasonText) {
-  appStatusElement.innerHTML = reasonText || 'Web app failed to load'
+/** @param {any} err Error to display to `console.error` */
+function handleAppManagerError(err) {
+  appStatusElement.innerHTML = err || "Web app failed to load"
   console.error(err)
 }
 
-window.addEventListener('load', registerComponents)
+window.addEventListener("load", registerComponents)
 
-navigator.serviceWorker.addEventListener('controllerchange', () => {
+navigator.serviceWorker.addEventListener("controllerchange", () => {
   sessionStorage.clear()
   window.location.reload()
 })
 
 navigator.serviceWorker
-  .register('/shell/sw.js', {
-    scope: '/',
-    updateViaCache: 'none',
+  .register("/shell/sw.js", {
+    scope: "/",
+    updateViaCache: "none",
     // type: 'module',
   })
   .then((reg) => (serviceWorkerRegistration = reg))
