@@ -16,8 +16,7 @@ export async function message(
   sw = navigator.serviceWorker.controller
 ) {
   if (!sw) {
-    console.error("Service worker not ready for messaging")
-    return Promise.resolve({ name: "", version: "" })
+    return Promise.reject("Service worker not ready for messaging")
   }
   const messageChannel = new MessageChannel()
   messageChannel.port1.start() // Required when using eventListener interface

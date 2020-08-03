@@ -5,29 +5,7 @@ let components = new Map()
 /** @type {{'name': String, version: String}} */
 let info
 
-/** @param {ServiceWorkerRegistration} registered_service_worker */
-async function service_worker_registered(registered_service_worker) {
-  if (!registered_service_worker || !registered_service_worker.active) {
-    if (registered_service_worker && registered_service_worker.installing)
-      handle_error("Service worker stuck installing!")
-
-    handle_error("App was not registered correctly.")
-    return
-  }
-
-  const sw_module = await import("/lib/service-worker/service_worker.js")
-  info = await sw_module.message(
-    sw_module.messages.get_app_info,
-    registered_service_worker.active
-  )
-  document.title = info.name
-  register_components()
-  if (registered_service_worker.waiting) {
-    // TODO emit the app_update event
-  }
-}
-
-async function load_initial_components() {
+function load_initial_components() {
   const loadComponentsPromises = []
   for (const [id, component] of components) {
     loadComponentsPromises.push(
@@ -63,7 +41,7 @@ async function load_initial_components() {
 export async function register_components() {
   let initModule
   try {
-    initModule = await import("../init.js")
+    initModule = await import("/init.js")
   } catch (reason) {
     handle_error(`${reason.message} - Couldn't import init module`)
     return
@@ -97,6 +75,36 @@ export async function register_components() {
   }
 
   appStatusElement?.remove()
+}
+
+/** @param {ServiceWorkerRegistration} registered_service_worker */
+async function service_worker_registered(registered_service_worker) {
+  if (!registered_service_worker || !registered_service_worker.active) {
+    if (registered_service_worker && registered_service_worker.installing)
+      handle_error("Service worker stuck installing!")
+
+    return handle_error("App was not registered correctly.")
+  }
+
+  const sw_module = await import("/lib/service-worker/service_worker.js")
+  try {
+    info = await sw_module.message(
+      sw_module.messages.get_app_info,
+      registered_service_worker.active
+    )
+  } catch (ex) {
+    console.error(ex)
+    return Promise.reject("Could not communicate with service worker!")
+  }
+
+  document.title = info.name
+
+  register_components()
+
+  if (registered_service_worker.waiting) {
+    // TODO emit the app_update event
+    alert('New update available!')
+  }
 }
 
 /** @param {any} err Error to display to `console.error` */
