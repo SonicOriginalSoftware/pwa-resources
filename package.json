@@ -2,19 +2,12 @@
   "name": "@sonicoriginalsoftware/pwa-components",
   "version": "0.1.0",
   "description": "Components for the pwa-framework",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
-  "scripts": {
-    "test": "npx -n '--experimental-json-modules @sonicoriginalsoftware/jester"
-  },
+  "scripts": {},
   "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sonicoriginalsoftware/pwa-components.git"
   },
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "keywords": [
     "web",
     "componets",
@@ -28,8 +21,6 @@
     "url": "https://github.com/sonicoriginalsoftware/pwa-components/issues"
   },
   "homepage": "https://github.com/sonicoriginalsoftware/pwa-components#readme",
-  "devDependencies": {
-    "@sonicoriginalsoftware/jester": "^0.2.4"
-  },
+  "devDependencies": {},
   "dependencies": {}
 }
